@@ -8,24 +8,26 @@ secure-proxy-config:
     user-token: ~
   network-destinations:
   - id: 1
-    system-id: code-repos
+    system-id: safe-services
     uris:
-    - https://github.com
-    - https://www.google.com
+    - https://*.microsoft.com/**
+    - https://microsoft.com/**
+    - https://www.google.com/**
+    - https://google.com/**
     methods: GET
     content-sent: application/json
     content-received: applicatin/json
-    ssl-inspection: true
+    ssl-inspection: false
     ssl-inspection-skip-reason: null
     av-scan: false
-    av-scan-skip-reason: local-av-present 
+    av-scan-skip-reason: safe-list-and-local-av-present
   - id: 2
-    system-id: wp.pl
+    system-id: GitHub
     uris:
-    - https://www.wp.pl 
-    - https://wp.pl
+    - https://**.github.com/**
+    - https://github.com/**
     methods: GET, POST, HEAD, OPTIONS
     ssl-inspection: true
-    ssl-inspection-skip-reason: null 
+    ssl-inspection-skip-reason: null
     av-scan: true
     av-scan-skip-reason: null
