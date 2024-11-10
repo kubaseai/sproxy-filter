@@ -36,6 +36,7 @@ public class ConfigReader {
 		new AtomicReference<>();
 	private static Logger log = LoggerFactory.getLogger(ConfigReader.class);
 	private AtomicBoolean reloadFlag = new AtomicBoolean(false);
+	private volatile boolean initialized = false;
 	
 	public ConfigReader(Config cfg) {
 		this.cfg = cfg;
@@ -62,6 +63,7 @@ public class ConfigReader {
 				_reloadConfiguration();
 				long end = System.currentTimeMillis();
 				int size = Optional.ofNullable(cfgByIpRef.get()).orElse(new HashMap<>()).size();
+				initialized = true;
 				log.info("Configuration reloaded in "+(end-start)+" ms, count="+size);
 			} 
 			catch (InterruptedException e) {
@@ -145,7 +147,7 @@ public class ConfigReader {
 	}
 
 	public Map<String,SecureProxyConfig> getConfigByIp() {
-		if (!reloadFlag.get()) {
+		if (!initialized) {
 			reloadConfiguration();
 		}
 		return cfgByIpRef.get();
