@@ -9,6 +9,7 @@ public class Config {
 	private String configDir;
 	private int numberOfConfigWorkers = 40;
 	private int configReloadTimeoutSec = 600;
+	private boolean trustXForwardedFor = false;
 
 	public String getConfigDir() {
 		return configDir;
@@ -24,5 +25,13 @@ public class Config {
 
 	public int getConfigReloadTimeoutSeconds() {
 		return configReloadTimeoutSec ;
+	}
+
+	public boolean isTrustXForwardedFor() {
+		return trustXForwardedFor;
+	}
+
+	public void setTrustXForwardedFor(boolean trustXForwardedFor) {
+		this.trustXForwardedFor = trustXForwardedFor;
 	}
 }

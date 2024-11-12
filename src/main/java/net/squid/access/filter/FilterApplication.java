@@ -26,6 +26,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.ResourceUtils;
 
+import net.squid.access.filter.entities.Config;
 import net.squid.access.filter.entities.SecureProxyConfig;
 import net.squid.access.filter.entities.SecureProxyConfig.NetworkDestination;
 import net.squid.access.filter.services.AccessLog;
@@ -41,6 +42,8 @@ public class FilterApplication implements CommandLineRunner {
 	private ConfigReader reader;
 	@Autowired
 	private AccessLog accessLog;
+	@Autowired
+	private Config config;
 	private static ConcurrentHashMap<String, Integer> wellKnownPorts = new ConcurrentHashMap<>();
 	private static OutputStream out;
 	private static AntPathMatcher urlMatcher = new AntPathMatcher();
@@ -102,14 +105,15 @@ public class FilterApplication implements CommandLineRunner {
 					b=1;
 				}
 				catch (Exception e) {}
-				if (tokens.length < 6) {
-					log.error("Wrong squid configuration. It must be: url_rewrite_extras \"%>a %>p %{Proxy-Authorization}>h %>rm %{Content-Type}>h %{Content-Type}<h\". Line was: "+line);
+				if (tokens.length < 7) {
+					log.error("Wrong squid configuration. It must be: url_rewrite_extras \"%>a:%>p %{X-Forwarded-For}>h %{Proxy-Authorization}>h %>rm %{Content-Type}>h %{Accept}>h\". Line was: "+line);
 					System.exit(2);
 				}
 				var url = tokens[b];
-				var ipPort = tokens[b+1];				
-				var m = tokens[b+3];
-				var authText = tokens[b+2].length() > 8 ? unbase64(tokens[b+2].substring(8)) : "";
+				var ipPort = tokens[b+1];
+				var shadowedIp = tokens[b+2];
+				var m = tokens[b+4];
+				var authText = tokens[b+3].length() > 8 ? unbase64(tokens[b+3].substring(8)) : "";
 				var user = getBasicUser(authText);				
 				var secret = hash(authText);
 				if (!url.startsWith("http")) { // domain, not URL
@@ -123,14 +127,15 @@ public class FilterApplication implements CommandLineRunner {
 						secret = us[1];
 					}
 				}
-				var ip = ipPort.split("\\:")[0];
+				var ip = (shadowedIp.length() > 0 && !"-".equals(shadowedIp) && config.isTrustXForwardedFor()) ?
+					shadowedIp : ipPort.split("\\:")[0];
 				SecureProxyConfig cfg = reader.getConfigByIp().get(ip+":"+user+"="+secret);
 				if (cfg==null) {
 					cfg = reader.getConfigByIp().get(ip);
 				}
-				var ctOut = tokens[b+4];
-				var ctIn = tokens[b+5];
-				String logEntry = "src="+ipPort+", user="+user+", verb="+m+", dst="+url+", ct_out="+ctOut+", ctIn="+ctIn;
+				var ctOut = tokens[b+5];
+				var ctIn = tokens[b+6];
+				String logEntry = "src="+ipPort+"/"+shadowedIp+", user="+user+", verb="+m+", dst="+url+", ct_out="+ctOut+", ctIn="+ctIn;
 				String status = transaction+filter(cfg, url, m, ctOut, ctIn, logEntry);
 				out.write(status.getBytes());
 				out.flush();
