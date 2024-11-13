@@ -1,12 +1,21 @@
 secure-proxy-config:
 - config-id: core-tech-services
   network-source:
-  - ip: 192.168.50.0/24
+  - ip: 10.0.0.0/8, 127.0.0.1
     system-id: devops
     app-id: 1inux
     user-id: user
     user-token: ~
   network-destinations:
+  - id: 0
+    system-id: ms-internet-check
+    uris:
+    - http://www.msftncsi.com/ncsi.txt
+    methods: GET
+    ssl-inspection: false
+    ssl-inspection-skip-reason: no-https
+    av-scan: true
+    av-scan-skip-reason: ~
   - id: 1
     system-id: safe-services
     uris:
@@ -15,8 +24,8 @@ secure-proxy-config:
     - https://www.google.com/**
     - https://google.com/**
     methods: GET
-    content-sent: application/json
-    content-received: applicatin/json
+    content-sent: ~
+    content-received: ~
     ssl-inspection: false
     ssl-inspection-skip-reason: null
     av-scan: false

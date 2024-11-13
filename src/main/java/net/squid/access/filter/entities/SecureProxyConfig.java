@@ -9,8 +9,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class SecureProxyConfig {
 	
+	public long version = 0;
+	
 	public static class NetworkSource {
-		private String ip;
+		private List<String> ip = new LinkedList<>();
 		@JsonProperty("system-id")
 		private String systemId;
 		@JsonProperty("app-id")
@@ -20,11 +22,15 @@ public class SecureProxyConfig {
 		@JsonProperty("user-token")
 	    private String userToken;
 	    
-		public String getIp() {
+		public List<String> getIp() {
 			return ip;
 		}
 		public void setIp(String ip) {
-			this.ip = ip;
+			if (ip!=null) {
+				for (String s : ip.split("\\,")) {
+					this.ip.add(s.trim());
+				}
+			}
 		}
 		public String getSystemId() {
 			return systemId;
@@ -56,6 +62,9 @@ public class SecureProxyConfig {
 				userId);
 		}
 		public String getUserCredentials() {
+			if (userId==null) {
+				return null;
+			}
 			return userId+"="+userToken;
 		}
 	}
@@ -139,6 +148,8 @@ public class SecureProxyConfig {
 			this.contentSent = contentSent;
 		}
 		public void setContentSent(String contentSent) {
+			if (contentSent==null)
+				return;
 			String[] ct = contentSent.split("\\,");
 			LinkedList<String> normalized = new LinkedList<>();
 			for (var s : ct) {
@@ -154,6 +165,8 @@ public class SecureProxyConfig {
 			this.contentReceived = contentReceived;
 		}
 		public void setContentReceived(String contentReceived) {
+			if (contentReceived==null)
+				return;
 			String[] ct = contentReceived.split("\\,");
 			LinkedList<String> normalized = new LinkedList<>();
 			for (var s : ct) {

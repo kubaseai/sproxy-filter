@@ -13,6 +13,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -129,16 +130,17 @@ public class FilterApplication implements CommandLineRunner {
 				}
 				var ip = (shadowedIp.length() > 0 && !"-".equals(shadowedIp) && config.isTrustXForwardedFor()) ?
 					shadowedIp : ipPort.split("\\:")[0];
-				SecureProxyConfig cfg = reader.getConfigByIp().get(ip+":"+user+"="+secret);
+				Map<String,SecureProxyConfig> configMap = reader.getConfigByIp();
+				SecureProxyConfig cfg = configMap.get(ip+":"+user+"="+secret);
 				if (cfg==null) {
-					cfg = reader.getConfigByIp().get(ip);
+					cfg = configMap.get(ip);
 				}
 				var ctOut = tokens[b+5];
 				var ctIn = tokens[b+6];
 				String logEntry = "src="+ipPort+"/"+shadowedIp+", user="+user+", verb="+m+", dst="+url+", ct_out="+ctOut+", ctIn="+ctIn;
 				String status = transaction+filter(cfg, url, m, ctOut, ctIn, logEntry);
 				out.write(status.getBytes());
-				out.flush();
+				out.flush();				
 			}
 		}
 		catch (Exception e) {
@@ -160,6 +162,10 @@ public class FilterApplication implements CommandLineRunner {
 	private String filter(SecureProxyConfig cfg, String url, String m, String ctSend, String ctRecv,
 		String logEntry) throws MalformedURLException
 	{
+		if (cfg==null) {
+			accessLog.logEntry("DENY :: "+logEntry+" // reason(s): no rule by ip");
+			return DENY;
+		}
 		StringBuilder why = new StringBuilder();
 		for (NetworkDestination dst : cfg.getNetworkDestinations()) {
 			for (URI uri : dst.getUris()) {
