@@ -23,7 +23,7 @@ public class Subnet {
 				octets[i]=(byte)(Integer.valueOf(octet) & 0xff);
 				i++;
 			}
-			if (octets[3]==0) {
+			if (octets[0]==0) {
 				octets[0]=1;
 			}
 			addrMin = addrFromBytes(octets);
@@ -44,8 +44,10 @@ public class Subnet {
 		}
 		addr++;
 		int lastOctet = (int)(addr & 0x000000ff);
-		if (lastOctet==0 || lastOctet==255)
+		if (lastOctet==0)
 			addr++;
+		else if (lastOctet==255)
+			addr+=2;
 		if (addr >= addrMax)
 			return null;
 		int[] octets = new int[4];
