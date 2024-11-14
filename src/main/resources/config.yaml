@@ -1,7 +1,7 @@
 secure-proxy-config:
 - config-id: core-tech-services
   network-source:
-  - ip: 10.0.0.0/8, 127.0.0.1
+  - ip: 10.0.0.0/16, 127.0.0.1
     system-id: devops
     app-id: 1inux
     user-id: user

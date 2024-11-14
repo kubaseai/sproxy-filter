@@ -220,14 +220,14 @@ public class SecureProxyConfig {
 	public void setConfigId(String configId) {
 		this.configId = configId;
 	}
-	public List<NetworkSource> getNetworkSource() {
-		return Arrays.asList(networkSource!=null ? networkSource : new NetworkSource[0]);
+	public NetworkSource[] getNetworkSource() {
+		return networkSource!=null ? networkSource : new NetworkSource[0];
 	}
 	public void setNetworkSource(NetworkSource[] networkSource) {
 		this.networkSource = networkSource;
 	}
-	public List<NetworkDestination> getNetworkDestinations() {
-		return Arrays.asList(networkDestinations!=null ? networkDestinations : new NetworkDestination[0]);
+	public NetworkDestination[] getNetworkDestinations() {
+		return networkDestinations!=null ? networkDestinations : new NetworkDestination[0];
 	}
 	public void setNetworkDestinations(NetworkDestination[] networkDestinations) {
 		this.networkDestinations = networkDestinations;

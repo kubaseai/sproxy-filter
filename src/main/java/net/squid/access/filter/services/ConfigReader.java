@@ -10,8 +10,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.commons.net.util.SubnetUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -22,7 +22,9 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import net.squid.access.filter.entities.Config;
 import net.squid.access.filter.entities.SecureProxyConfig;
+import net.squid.access.filter.entities.SecureProxyConfig.NetworkSource;
 import net.squid.access.filter.entities.SecureProxyConfigContainer;
+import net.squid.access.filter.entities.Subnet;
 
 @Service
 public class ConfigReader {
@@ -33,7 +35,8 @@ public class ConfigReader {
 	private static Logger log = LoggerFactory.getLogger(ConfigReader.class);
 	private AtomicBoolean reloadingFlag = new AtomicBoolean(false);
 	private volatile boolean initialized = false;
-	private volatile long runCount = 0;
+	private AtomicLong runCount = new AtomicLong(0);
+	private ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 		
 	public ConfigReader(Config cfg) {
 		this.cfg = cfg;
@@ -55,7 +58,7 @@ public class ConfigReader {
 		}));
 	}
 
-	@Scheduled(fixedRate = 180000)
+	@Scheduled(timeUnit = TimeUnit.SECONDS, fixedRate = 120)
 	public void reloadConfiguration() {
 		if (reloadingFlag.compareAndExchange(false, true)==false) {
 			long start = System.currentTimeMillis();
@@ -78,27 +81,34 @@ public class ConfigReader {
 		}
 	}
 	
-	private void _reloadConfiguration() throws InterruptedException {
-		log.info("Reload config request started, initialized="+initialized);
-		ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-		ExecutorService es = Executors.newWorkStealingPool(cfg.getNumberOfConfigWorkers());
+	private synchronized void _reloadConfiguration() throws InterruptedException {
+		log.info("Reload config request started, initialized="+initialized);		
+		final ExecutorService es = Executors.newWorkStealingPool(cfg.getNumberOfConfigWorkers());
 		List<File> listOfConfigFiles = listConfigFiles();
-		if (runCount > Integer.MAX_VALUE) {
-			runCount = 0;
-		}
-		final long version = ++runCount;
-		
-		listOfConfigFiles.stream().forEach( f -> {
+		runCount.compareAndSet(Integer.MAX_VALUE, 0);
+		final long version = runCount.incrementAndGet();
+				
+		for (File f : listOfConfigFiles) {
 			es.submit(() -> {			
 				try {
-					mapper.readValue(f, SecureProxyConfigContainer.class)
-					.getSecureProxyConfig().forEach( c -> {
+					for (var c : mapper.readValue(f, SecureProxyConfigContainer.class)
+						.getSecureProxyConfig())
+					{
 						c.version = version;
-						c.getNetworkSource().forEach( src -> {
+						for (NetworkSource src : c.getNetworkSource()) {
+							log.info("Network source in "+f.getName()+" with IPs: "+src.getIp());
 							for (String ipOrSubnet : src.getIp()) {
 								if (ipOrSubnet.contains("/")) {
-									var subnetInfo = new SubnetUtils(ipOrSubnet).getInfo();
-									for (String a : subnetInfo.getAllAddresses()) {
+									Subnet subnet = new Subnet(ipOrSubnet);
+									if (subnet.getMask() <= 8 || !subnet.isValid()) {
+										log.error("Invalid subnet: "+ipOrSubnet+", err="+subnet.getErrorMessage());
+										continue;
+									}
+									while (true) {
+										String a = subnet.next();
+										if (a==null) {
+											break;
+										}
 										SecureProxyConfig previous = cfgByIp.put(a, c);
 										if (previous!=null && previous.version == c.version) {
 											log.error("Configuration overlap detected on "+a+". Rebinding to user.\nOld: "+previous+"\nNew: "+c);
@@ -107,54 +117,65 @@ public class ConfigReader {
 											cfgByIp.remove(a, c);
 											break;
 										}
-									};
-									if (subnetInfo.getAddressCountLong()==0) {
-										log.error("Configuration contains empty subnet="+ipOrSubnet+": "+c);
-									}
+									}								
 								}							
 								else {
+									log.info("CFG: Single ip "+ipOrSubnet);
 									SecureProxyConfig previous = cfgByIp.put(ipOrSubnet, c);
 									if (previous!=null && previous.version == c.version) {
-										log.warn("Configuration overlap detected on "+ipOrSubnet+". Rebinding to user.\nOld: "+previous+"\nNew: "+c);
+										log.error("Configuration overlap detected on "+ipOrSubnet+". Rebinding to user.\nOld: "+previous+"\nNew: "+c);
 										rebindToUser(previous, cfgByIp);
 										rebindToUser(c, cfgByIp);
 										cfgByIp.remove(ipOrSubnet, c);
 									}
 								}
 							}
-						});				
-					});					
+						}				
+					};				
 				}
-				catch (Exception e) {
+				catch (Throwable e) {
 					log.error("Cannot process SecureProxyConfig file "+f.getAbsolutePath(), e);
 				}
 			});
-		});
+		};
 		es.shutdown();
 		es.awaitTermination(cfg.getConfigReloadTimeoutSeconds(), TimeUnit.SECONDS);
 		int notFinished = es.shutdownNow().size();
 		var it = cfgByIp.entrySet().iterator();
+		int cleared = 0;
 		while (it.hasNext()) {
 			var e = it.next();
 			if (e.getValue().version < version) {
 				it.remove();
+				cleared++;
+				if (cleared==1) {
+					log.info("Clearing old config version "+e.getValue().version+" vs "+version);
+				}
 			}			
 		}
 		log.info("Reload config request "+version+" finished, number of files="+listOfConfigFiles.size()+
-			", entries="+cfgByIp.size()+", orphaned tasks="+notFinished);
+			", entries="+cfgByIp.size()+", cleared="+cleared+", orphaned tasks="+notFinished);
 	}
 	
 	private void rebindToUser(SecureProxyConfig c, ConcurrentHashMap<String,SecureProxyConfig> cfgByIp) {
-		c.getNetworkSource().forEach(src -> {
+		for (NetworkSource src : c.getNetworkSource()) {
 			for (String ipOrSubnet : src.getIp()) {
 				if (ipOrSubnet.contains("/")) {
-					var subnetInfo = new SubnetUtils(ipOrSubnet).getInfo();
-					for (String a : subnetInfo.getAllAddresses()) {
+					Subnet subnet = new Subnet(ipOrSubnet);
+					if (subnet.getMask() <= 8 || !subnet.isValid()) {
+						log.error("Invalid subnet: "+ipOrSubnet+", err="+subnet.getErrorMessage());
+						continue;
+					}
+					while (true) {
+						String a = subnet.next();
+						if (a==null) {
+							break;
+						}
 						SecureProxyConfig previous = cfgByIp.put(a+":"+src.getUserCredentials(), c);
 						if (previous!=null && previous.version==c.version) {
 							log.error("Configuration overlap detected while rebinding to user.\nOld: "+previous+"\nNew: "+c);
 						}
-					};
+					}
 				}
 				else {
 					SecureProxyConfig previous = cfgByIp.put(ipOrSubnet+":"+src.getUserCredentials(), c);
@@ -163,7 +184,7 @@ public class ConfigReader {
 					}
 				}
 			}
-		});		
+		}	
 	}
 
 	public Map<String,SecureProxyConfig> getConfigByIp() {
