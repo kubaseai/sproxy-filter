@@ -1,9 +1,9 @@
 #!/bin/sh
 echo "***[ Starting SPROXY container ]*************************"
-echo "***[ Staring AV updater daemon ]*************************"
-sudo -u clamupdate /usr/bin/freshclam -d
 echo "***[ Starting AV daemon ]********************************"
 sudo -u clamscan /usr/sbin/clamd -c /etc/clamd.d/scan.conf
+echo "***[ Staring AV updater daemon ]*************************"
+sudo -u clamupdate /usr/bin/freshclam -d
 echo "***[ Starting ICAP server ]******************************"
 sudo -u c-icap /usr/sbin/c-icap -f /etc/c-icap/c-icap.conf
 echo "***[ Starting Security Internet Gateway ]****************"

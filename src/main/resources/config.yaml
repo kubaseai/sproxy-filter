@@ -11,9 +11,10 @@ secure-proxy-config:
     system-id: ms-internet-check
     uris:
     - http://www.msftncsi.com/ncsi.txt
+    - https://www.eicar.org/download/eicar.com
     methods: GET
     ssl-inspection: false
-    ssl-inspection-skip-reason: no-https
+    ssl-inspection-skip-reason: not-wanted
     av-scan: true
     av-scan-skip-reason: ~
   - id: 1
