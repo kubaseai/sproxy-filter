@@ -134,6 +134,9 @@ public class FilterApplication implements CommandLineRunner {
 				SecureProxyConfig cfg = configMap.get(ip+":"+user+"="+secret);
 				if (cfg==null) {
 					cfg = configMap.get(ip);
+					if (cfg==null) {
+						cfg = configMap.get("any");
+					}
 				}
 				var ctOut = tokens[b+5];
 				var ctIn = tokens[b+6];

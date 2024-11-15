@@ -1,20 +1,19 @@
 secure-proxy-config:
 - config-id: core-tech-services
   network-source:
-  - ip: 10.0.0.0/16, 127.0.0.1
+  - ip: any, 10.0.0.0/16, 127.0.0.1
     system-id: devops
     app-id: 1inux
     user-id: user
     user-token: ~
   network-destinations:
   - id: 0
-    system-id: ms-internet-check
+    system-id: container-healthcheck-do-not-remove
     uris:
     - http://www.msftncsi.com/ncsi.txt
-    - https://www.eicar.org/download/eicar.com
     methods: GET
     ssl-inspection: false
-    ssl-inspection-skip-reason: not-wanted
+    ssl-inspection-skip-reason: not-needed
     av-scan: true
     av-scan-skip-reason: ~
   - id: 1

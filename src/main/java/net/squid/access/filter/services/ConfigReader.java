@@ -96,7 +96,7 @@ public class ConfigReader {
 					{
 						c.version = version;
 						for (NetworkSource src : c.getNetworkSource()) {
-							log.info("Network source in "+f.getName()+" with IPs: "+src.getIp());
+							log.info("Network source in "+f.getName()+" with IPs: "+src.getIp()+", currently holding "+cfgByIp.size()+" entries");
 							for (String ipOrSubnet : src.getIp()) {
 								if (ipOrSubnet.contains("/")) {
 									Subnet subnet = new Subnet(ipOrSubnet);
@@ -120,7 +120,6 @@ public class ConfigReader {
 									}								
 								}							
 								else {
-									log.info("CFG: Single ip "+ipOrSubnet);
 									SecureProxyConfig previous = cfgByIp.put(ipOrSubnet, c);
 									if (previous!=null && previous.version == c.version) {
 										log.error("Configuration overlap detected on "+ipOrSubnet+". Rebinding to user.\nOld: "+previous+"\nNew: "+c);

@@ -15,7 +15,7 @@ touch /run/squid.pid && chown squid:squid /run/squid.pid && \
 chown -R squid:squid /var/spool/squid/ssl_db && \
 sudo -u clamupdate /usr/bin/freshclam"
 
-ADD squidclamav.conf /etc/c-icap/squidclamv.conf
+ADD squidclamav.conf /etc/c-icap/squidclamav.conf
 ADD src/main/resources/sproxy.conf /etc/squid/sproxy/sproxy.conf
 ADD src/main/resources/config.yaml /etc/squid/sproxy/configs/config.yaml
 ADD src/main/resources/cakey.pem /etc/squid/sproxy/cakey.pem
