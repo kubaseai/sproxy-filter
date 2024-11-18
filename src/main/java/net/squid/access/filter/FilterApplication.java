@@ -77,7 +77,7 @@ public class FilterApplication implements CommandLineRunner {
 	private final static String ACCEPT_SSL = "OK clt_conn_tag=filtered_SSL\n";
 	private final static String ACCEPT_AV = "OK clt_conn_tag=filtered_AV\n";
 	private final static String ACCEPT_PASS = "OK clt_conn_tag=filtered_PASS\n";
-	private final static String DENY = "OK status=302 url=\"http://example.com\"\n";
+	private final static String DENY = "OK status=302 url=\"https://www.blocked.org.uk\"\n";
 	
 	private WeakHashMap<String, String> authByPeer = new WeakHashMap<>();
 	
