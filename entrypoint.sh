@@ -1,5 +1,6 @@
 #!/bin/sh
-echo "***[ Starting SPROXY container ]*************************"
+echo "***[ Starting SPROXY container built at: ]****************"
+cat /buildinfo
 echo "***[ Starting AV daemon ]********************************"
 sudo -u clamscan /usr/sbin/clamd -c /etc/clamd.d/scan.conf
 echo "***[ Staring AV updater daemon ]*************************"

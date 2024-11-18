@@ -14,6 +14,7 @@ touch /run/squid.pid && chown squid:squid /run/squid.pid && \
 /usr/lib64/squid/security_file_certgen -c -s /var/spool/squid/ssl_db -M 128MB && \
 chown -R squid:squid /var/spool/squid/ssl_db && \
 sudo -u clamupdate /usr/bin/freshclam"
+RUN date > /buildinfo
 
 ADD squidclamav.conf /etc/c-icap/squidclamav.conf
 ADD src/main/resources/sproxy.conf /etc/squid/sproxy/sproxy.conf
