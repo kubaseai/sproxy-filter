@@ -3,7 +3,7 @@ See: docker.io/digitalforensic/sproxy:latest
 $ ID=$(systemd-escape ./deployment.yaml)
 $ systemctl --user start podman-kube@$ID.service
 $ cat /usr/lib/systemd/system/podman-kube@.service | grep ExecStart
-ExecStart=/usr/bin/podman kube play --publish-all --network slirp4netns --replace --service-container=true %I
+ExecStart=/usr/bin/podman kube play --publish-all --network slirp4netns:port_handler=slirp4netns --replace --service-container=true %I
 ```
 user@fedora:~/eclipse-workspace/filter$ https_proxy=192.168.50.226:8443 curl -k -v https:/github.com
 * Uses proxy env variable https_proxy == '192.168.50.226:8443'
