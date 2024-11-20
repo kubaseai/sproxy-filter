@@ -19,8 +19,9 @@ spec:
     spec:
       volumes:
       - name: sproxy-configs
-        hostPath: /etc/sproxy/configs
-        type: Directory
+        hostPath:
+          path: /etc/sproxy/configs
+          type: Directory
       containers:
       - image: docker.io/digitalforensic/sproxy:latest
         name: sproxy

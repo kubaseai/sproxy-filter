@@ -6,6 +6,7 @@ RUN /bin/sh -c "dnf -y install https://dl.fedoraproject.org/pub/epel/epel-releas
 dnf update -y && dnf install sudo java-21-openjdk squid squidclamav c-icap clamav clamd clamav-freshclam -y && \
 echo 'Service av squidclamav.so' >> /etc/c-icap/c-icap.conf && \
 echo 'LocalSocket /var/run/clamav/clamd.ctl' >> /etc/clamd.d/scan.conf && \
+echo 'ConcurrentDatabaseReload no' >> /etc/clamd.d/scan.conf && \
 chown c-icap:c-icap /etc/c-icap/c-icap.conf && \
 chown clamupdate:clamupdate /etc/freshclam.conf && \
 chown clamscan:clamscan /etc/clamd.d/scan.conf && \
