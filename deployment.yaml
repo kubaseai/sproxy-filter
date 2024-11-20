@@ -17,11 +17,18 @@ spec:
         app: sproxy-pod
       name: sproxy-pod
     spec:
+      volumes:
+      - name: sproxy-configs
+        hostPath: /etc/sproxy/configs
+        type: Directory
       containers:
       - image: docker.io/digitalforensic/sproxy:latest
         name: sproxy
         ports:
         - containerPort: 8443
+        volumeMounts:
+        - name: sproxy-configs
+          mountPath: /etc/squid/sproxy/configs
 ---
 apiVersion: v1
 kind: Service
