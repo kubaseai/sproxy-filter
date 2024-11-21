@@ -2,7 +2,7 @@
 echo "***[ Starting SPROXY container built at: ]****************"
 cat /buildinfo
 echo "***[ Starting AV daemon ]********************************"
-sudo -u clamscan /usr/sbin/clamd -c /etc/clamd.d/scan.conf
+sudo -u clamscan /usr/sbin/clamd -c /etc/clamd.d/clamd.conf
 echo "***[ Staring AV updater daemon ]*************************"
 sudo -u clamupdate /usr/bin/freshclam -d
 echo "***[ Starting ICAP server ]******************************"
