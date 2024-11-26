@@ -90,6 +90,8 @@ public class FilterApplication implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 		log.info("Starting filter app");
+		if (config.getServerPort() > 0)
+			return;
 		try (InputStreamReader isr = new InputStreamReader(System.in);
 			BufferedReader br = new BufferedReader(isr)) {
 			String line = null;
