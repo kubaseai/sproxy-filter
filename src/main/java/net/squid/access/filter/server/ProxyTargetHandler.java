@@ -28,6 +28,7 @@ public class ProxyTargetHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
+    	// Queue message for AV scan and delay write?
         clientChannel.writeAndFlush(msg); // just forward
     }
 

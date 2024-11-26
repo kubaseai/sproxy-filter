@@ -8,7 +8,7 @@ public class HttpConnectHeader {
     private String method;
     private String host;
     private int port;
-    private boolean https;
+    private boolean tls;
     private boolean complete;
     private ByteBuf byteBuf = Unpooled.buffer();
 
@@ -25,14 +25,14 @@ public class HttpConnectHeader {
             }
             if (method == null) {
                 method = line.split(" ")[0]; // the first word is http method name
-                https = method.equalsIgnoreCase("CONNECT"); // method CONNECT means https
+                tls = method.equalsIgnoreCase("CONNECT"); // method CONNECT means https
             }
             if (line.startsWith("Host: ")) {
                 String[] arr = line.split(":");
                 host = arr[1].trim();
                 if (arr.length == 3) {
                     port = Integer.parseInt(arr[2]);
-                } else if (https) {
+                } else if (tls) {
                     port = 443; // https
                 } else {
                     port = 80; // http
@@ -88,12 +88,12 @@ public class HttpConnectHeader {
 		this.port = port;
 	}
 
-	public boolean isHttps() {
-		return https;
+	public boolean isTls() {
+		return tls;
 	}
 
-	public void setHttps(boolean https) {
-		this.https = https;
+	public void setTls(boolean tls) {
+		this.tls = tls;
 	}
 
 	public boolean isComplete() {
@@ -120,7 +120,7 @@ public class HttpConnectHeader {
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("HttpProxyClientHeader [method=").append(method).append(", host=").append(host).append(", port=")
-			.append(port).append(", https=").append(https).append(", complete=").append(complete).append("]");
+			.append(port).append(", https=").append(tls).append(", complete=").append(complete).append("]");
 		return builder.toString();
 	}	
 }
